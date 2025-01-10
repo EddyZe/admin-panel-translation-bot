@@ -1,0 +1,65 @@
+.hover-layout {
+    padding: 5px;
+    border-bottom: 2px solid aliceblue;
+    transition: background-color 0.3s; /* Плавный переход цвета */
+}
+
+.grid {
+    background: linen;
+}
+
+.hover-layout:hover {
+    background-color: aliceblue; /* Цвет при наведении */
+}
+
+.hover-layout span:hover {
+    cursor: default;
+}
+
+.grid-details {
+    align-items: center;
+}
+
+.telegram-list {
+    padding-right: 2%;
+    align-items: center;
+    border-bottom: 2px solid aliceblue;
+    transition: background-color 0.3s;
+}
+
+.telegram-list-history {
+    padding: 10px;
+    align-items: flex-start;
+    border-bottom: 2px solid aliceblue;
+    transition: background-color 0.3s;
+}
+
+.telegram-list-history:hover {
+    background-color: aliceblue; /* Цвет при наведении */
+}
+
+.telegram-list-history h5 {
+    font-weight: normal;
+}
+
+.telegram-list-history span {
+    margin-top: -10px;
+    font-size: 13px;
+}
+
+.telegram-list-history span, H4:hover {
+    cursor: default;
+}
+
+.telegram-list:hover {
+    background-color: aliceblue; /* Цвет при наведении */
+}
+
+.telegram-list span, H4:hover {
+    cursor: default;
+}
+
+.filter-block {
+    border-left: 1px solid #eae7e7;
+    padding-right: 3%;
+}
