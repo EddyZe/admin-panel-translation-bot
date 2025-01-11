@@ -4,7 +4,10 @@ package ru.eddyz.adminpaneltranslationbot.view;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -32,7 +35,7 @@ public class CreatingPaymentsView extends HorizontalLayout {
     private final NumberField numberChars;
     private final NumberField amount;
     private final ComboBox<String> asset;
-    private final VirtualList<Price> prices;
+    private final Grid<Price> prices;
     private final Button save;
 
 
@@ -40,12 +43,25 @@ public class CreatingPaymentsView extends HorizontalLayout {
         this.priceService = priceService;
         setSizeFull();
 
-        prices = new VirtualList<>();
+        prices = new Grid<>(Price.class, false);
+        prices.addColumn(Price::getPriceId)
+                .setHeader("ID")
+                .setAutoWidth(true);
+        prices.addColumn(Price::getNumberCharacters)
+                .setHeader("Кол-во символов")
+                .setAutoWidth(true)
+                .setSortable(true);
+        prices.addColumn(Price::getPrice)
+                .setHeader("Сумма")
+                .setAutoWidth(true);
+        prices.addColumn(Price::getAsset)
+                .setAutoWidth(true)
+                .setHeader("Валюта");
+        prices.addComponentColumn(price -> createDeleteButton(priceService, price));
+
         prices.setItems(priceService.findAll());
-        prices.setRenderer(new ComponentRenderer<>(this::createRender));
         prices.setHeightFull();
         add(prices);
-        expand(prices);
 
         asset = new ComboBox<>("Валюта");
         asset.setAllowCustomValue(true);
@@ -69,6 +85,16 @@ public class CreatingPaymentsView extends HorizontalLayout {
 
         creatingBlock.add(numberChars, amount, asset, save);
         add(creatingBlock);
+    }
+
+    private Icon createDeleteButton(PriceService priceService, Price price) {
+        var icon = VaadinIcon.CLOSE_SMALL.create();
+        icon.setColor("red");
+        icon.addClickListener(e -> {
+            priceService.deleteById(price.getPriceId());
+            refreshList();
+        });
+        return icon;
     }
 
     private void addPrice() {
@@ -102,29 +128,6 @@ public class CreatingPaymentsView extends HorizontalLayout {
         Notification notification = Notification.show(message, duration,
                 Notification.Position.TOP_CENTER);
         notification.addThemeVariants(notificationVariant);
-    }
-
-    private Component createRender(Price price) {
-        var hor = new HorizontalLayout();
-        hor.setWidthFull();
-        hor.addClassName("telegram-list");
-
-        var ver = new VerticalLayout();
-
-        Span title = new Span("%d символов за %.2f %s".formatted(price.getNumberCharacters(), price.getPrice(), price.getAsset()));
-        title.setWidthFull();
-
-        ver.add(title);
-
-        var deleteBtn = new Button("Удалить");
-        deleteBtn.addClickListener((clickEvent) -> {
-            priceService.deleteById(price.getPriceId());
-            refreshList();
-        });
-        deleteBtn.setHeightFull();
-
-        hor.add(ver, deleteBtn);
-        return hor;
     }
 
     private void refreshList() {
