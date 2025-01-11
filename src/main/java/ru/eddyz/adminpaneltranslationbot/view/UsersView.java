@@ -127,8 +127,18 @@ public class UsersView extends VerticalLayout {
 
             payments.setAriaLabel("Платежи пользователя");
             payments.addColumn(Payment::getPaymentId).setHeader("ID").setAutoWidth(true);
-            payments.addColumn(payment -> "%.2f %s".formatted(payment.getAmount(), payment.getAsset()))
+            payments.addColumn(payment -> {
+                        boolean integerNumber = payment.getAmount() == payment.getAmount().intValue();
+                        return "%s"
+                                .formatted(
+                                        integerNumber ?
+                                                String.valueOf(payment.getAmount().intValue()) :
+                                                payment.getAmount().toString());
+                    })
                     .setHeader("Сумма").setAutoWidth(true);
+            payments.addColumn(Payment::getAsset)
+                    .setHeader("Валюта")
+                    .setAutoWidth(true);
             payments.addColumn(payment -> payment.getNumberCharacters().toString())
                     .setHeader("Кол-во символов")
                     .setAutoWidth(true);

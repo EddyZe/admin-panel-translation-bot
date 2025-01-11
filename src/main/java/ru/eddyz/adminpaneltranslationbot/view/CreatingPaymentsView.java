@@ -51,7 +51,14 @@ public class CreatingPaymentsView extends HorizontalLayout {
                 .setHeader("Кол-во символов")
                 .setAutoWidth(true)
                 .setSortable(true);
-        prices.addColumn(Price::getPrice)
+        prices.addColumn(price -> {
+                    boolean integerNumber = price.getPrice() == price.getPrice().intValue();
+                    return "%s"
+                            .formatted(
+                                    integerNumber ?
+                                            String.valueOf(price.getPrice().intValue()) :
+                                            price.getPrice().toString());
+                })
                 .setHeader("Сумма")
                 .setAutoWidth(true);
         prices.addColumn(Price::getAsset)

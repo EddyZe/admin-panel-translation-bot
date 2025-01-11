@@ -66,7 +66,17 @@ public class HistoryPaymentsView extends HorizontalLayout {
         payments = new Grid<>(Payment.class, false);
         payments.addColumn(Payment::getPaymentId).setHeader("ID").setAutoWidth(true);
         payments.addColumn(payment -> payment.getPayer().getUsername()).setHeader("Username");
-        payments.addColumn(payment -> "%.2f %s".formatted(payment.getAmount(), payment.getAsset())).setHeader("Сумма");
+        payments.addColumn(payment -> {
+            boolean integerNumber = payment.getAmount() == payment.getAmount().intValue();
+            return "%s"
+                    .formatted(
+                            integerNumber ?
+                                    String.valueOf(payment.getAmount().intValue()) :
+                                    payment.getAmount().toString());
+        }).setHeader("Сумма");
+        payments.addColumn(Payment::getAsset)
+                .setAutoWidth(true)
+                .setHeader("Валюта");
         payments.addColumn(Payment::getNumberCharacters).setHeader("Символы");
         payments.addColumn(payment -> dtf.format(payment.getCreatedAt()))
                 .setHeader("Дата и время")
@@ -79,7 +89,6 @@ public class HistoryPaymentsView extends HorizontalLayout {
         search.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
         search.setValueChangeMode(ValueChangeMode.EAGER);
         search.addValueChangeListener(e -> dataView.refreshAll());
-
 
 
         var filterButton = new Button("Применить");
