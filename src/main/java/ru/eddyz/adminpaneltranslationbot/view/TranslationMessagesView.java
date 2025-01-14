@@ -12,7 +12,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -26,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Route(value = "historyTranslation", layout = MainView.class)
 @PermitAll
@@ -50,41 +50,44 @@ public class TranslationMessagesView extends HorizontalLayout {
         this.translationMessagesService = translationMessagesService;
         setSizeFull();
 
-        var dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy hh:mm");
+        var mainBlock = new VerticalLayout();
+        var messages = new HorizontalLayout();
+        messages.setSizeFull();
+        mainBlock.setSizeFull();
+
+        var dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
         translationMessages = new Grid<>(TranslationMessage.class, false);
+        translationMessages.addClassName("custom-grid");
         translationMessages.setSizeFull();
-        translationMessages.addColumn(TranslationMessage::getMessageId).setHeader("ID").setAutoWidth(true);
-        translationMessages.addColumn(TranslationMessage::getFromUsername).setHeader("Отправитель").setAutoWidth(true);
+        translationMessages.addColumn(TranslationMessage::getMessageId).setHeader("ID")
+                .setAutoWidth(true);
+        translationMessages.addColumn(TranslationMessage::getFromUsername).setHeader("Отправитель");
         translationMessages.addColumn(translationMessage -> translationMessage.getGroup()
-                .getTitle())
+                        .getTitle())
                 .setAutoWidth(true)
                 .setHeader("Группа");
         translationMessages.addColumn(translationMessage -> dtf.format(translationMessage.getTranslationTime()))
                 .setHeader("Дата перевода")
                 .setAutoWidth(true)
                 .setSortable(true);
-        translationMessages.addColumn(TranslationMessage::getNumberCharacters).setHeader("Символов").setAutoWidth(true);
-        dataView = translationMessages.setItems(translationMessagesService.findAll());
-        translationMessages.setItemDetailsRenderer(createTranslationMessageRender());
-        translationMessages.addItemClickListener(click -> {
-            var bool = translationMessages.isDetailsVisible(click.getItem());
-            log.info(String.valueOf(bool));
-            translationMessages.setDetailsVisible(click.getItem(), bool);
-        });
+        translationMessages.addColumn(TranslationMessage::getNumberCharacters).setHeader("Символов")
+                .setAutoWidth(true);
+        translationMessages.addComponentColumn(message -> createTextAriaReadOnly(message.getMessage()))
+                .setAutoWidth(true)
+                .setHeader("Сообщение");
+        translationMessages.addComponentColumn(message -> createTextAriaReadOnly(message.getMessageTranslate()))
+                .setAutoWidth(true)
+                .setHeader("Перевод");
+        dataView = translationMessages.setItems(getTranslationMessages());
 
-        var filterBlock = new VerticalLayout();
-        filterBlock.setWidth("40%");
-        filterBlock.addClassNames("filter-block");
+        var filterBlock = new FormLayout();
+        filterBlock.setWidth("80%");
 
-        var dateBlock = new HorizontalLayout();
-        dateBlock.setWidthFull();
         startDate = new DatePicker("От");
         endDate = new DatePicker("До");
 
         checkerDate();
-
-        dateBlock.add(startDate, endDate);
         search = new TextField("Поиск по username или группе");
         search.setWidthFull();
         search.setPlaceholder("Search");
@@ -94,52 +97,52 @@ public class TranslationMessagesView extends HorizontalLayout {
 
         var filterButton = new Button("Применить");
 
-        filterButton.addClickListener(e -> {
-            dataView = translationMessages.setItems(getTranslateMessages());
-        });
+        filterButton.addClickListener(e -> dataView = translationMessages.setItems(getTranslateMessages()));
 
         dataView.addFilter(message -> {
             String searchTerm = search.getValue().trim();
             if (searchTerm.isEmpty())
                 return true;
 
-            return message.getFromUsername().toLowerCase().contains(searchTerm.toLowerCase()) ||
+            return Optional.ofNullable(message.getFromUsername()).orElse("")
+                           .toLowerCase().contains(searchTerm.toLowerCase()) ||
                    message.getGroup().getTitle().toLowerCase().contains(searchTerm.toLowerCase());
         });
 
-        filterBlock.add(search, dateBlock, filterButton);
+        filterBlock.add(search, startDate, endDate, filterButton);
+        filterBlock.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 4));
+        filterBlock.setColspan(search, 1);
+        filterBlock.setColspan(startDate, 1);
+        filterBlock.setColspan(endDate, 1);
+        filterBlock.setColspan(filterButton, 1);
 
+        mainBlock.add(filterBlock, translationMessages);
 
-
-        add(translationMessages, filterBlock);
+        add(mainBlock);
 
     }
 
-    private ComponentRenderer<TranslationLayout, TranslationMessage> createTranslationMessageRender() {
-        return new ComponentRenderer<>(TranslationLayout::new,
-                TranslationLayout::setMessage);
+    private List<TranslationMessage> getTranslationMessages() {
+        return translationMessagesService.findAll()
+                .stream()
+                .sorted((o1, o2) -> {
+                    if (o2.getTranslationTime().isAfter(o1.getTranslationTime()))
+                        return 1;
+                    else if (o2.getTranslationTime().isBefore(o1.getTranslationTime()))
+                        return -1;
+                    else
+                        return 0;
+                })
+                .toList();
     }
 
-    private static class TranslationLayout extends FormLayout {
-        private final TextArea origMessage = new TextArea("Оригинальное сообщение");
-        private final TextArea translationMessage = new TextArea("Перевод");
-
-        public TranslationLayout() {
-            setSizeFull();
-            origMessage.setReadOnly(true);
-            translationMessage.setReadOnly(true);
-            addClassName("grid-details");
-            add(origMessage, translationMessage);
-
-            setResponsiveSteps(new ResponsiveStep("0", 3));
-            setColspan(origMessage, 3);
-            setColspan(translationMessage, 3);
-        }
-
-        public void setMessage(TranslationMessage message) {
-            origMessage.setValue(message.getMessage());
-            translationMessage.setValue(message.getMessageTranslate());
-        }
+    private TextArea createTextAriaReadOnly(String message) {
+        TextArea textArea = new TextArea();
+        textArea.setWidthFull();
+        textArea.setMaxHeight("150px");
+        textArea.setReadOnly(true);
+        textArea.setValue(message);
+        return textArea;
     }
 
     private List<TranslationMessage> getTranslateMessages() {

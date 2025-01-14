@@ -2,7 +2,7 @@ package ru.eddyz.adminpaneltranslationbot.view;
 
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.icon.Icon;
@@ -87,7 +87,7 @@ public class GroupListView extends VerticalLayout {
                 .setHeader("Переведенных сообщений")
                 .setAutoWidth(true);
         groups.addComponentColumn(this::createEditMenu).setHeader("Символы");
-        groups.addComponentColumn(this::createDeleteBtn);
+        groups.addComponentColumn(this::createDeleteBtn).setHeader("Удаление").setAutoWidth(true);
         groups.setItemDetailsRenderer(createRenderGroup());
 
         dataView = groups.setItems(groupService.findAll());
@@ -118,10 +118,10 @@ public class GroupListView extends VerticalLayout {
 
     private Component createEditMenu(Group group) {
         var block = new HorizontalLayout();
-        block.setDefaultVerticalComponentAlignment(Alignment.CENTER);
         var editField = new NumberField();
         var icon = VaadinIcon.CHECK_CIRCLE_O.create();
 
+        block.setDefaultVerticalComponentAlignment(Alignment.CENTER);
         editField.setValue(group.getLimitCharacters().doubleValue());
         editField.setWidth("60%");
         icon.setColor("green");
@@ -146,45 +146,56 @@ public class GroupListView extends VerticalLayout {
                 (groupView, group) -> groupView.setGroup(group, translationMessagesService));
     }
 
-    private static class GroupView extends FormLayout {
+    private static class GroupView extends VerticalLayout {
 
         private final Grid<TranslationMessage> messages = new Grid<>(TranslationMessage.class, false);
 
         public GroupView() {
             setSizeFull();
 
+
             TextField titleTranslateMessages = new TextField();
+            titleTranslateMessages.setWidthFull();
             titleTranslateMessages.setValue("Переведенные сообщения");
             titleTranslateMessages.setReadOnly(true);
             add(titleTranslateMessages, messages);
 
-            setResponsiveSteps(new ResponsiveStep("0", 2));
-            setColspan(titleTranslateMessages, 2);
-            setColspan(messages, 2);
+//            setResponsiveSteps(new ResponsiveStep("0", 2));
+//            setColspan(titleTranslateMessages, 2);
+//            setColspan(messages, 2);
         }
 
         public void setGroup(Group group, TranslationMessagesService translationMessagesService) {
             var dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
             var translationMessages = translationMessagesService.findByGroupChatId(group.getChatId());
 
+
             messages.addComponentColumn(message -> createMessageComponent(message.getMessage()))
                     .setHeader("Оригинальное сообщение")
+                    .setTextAlign(ColumnTextAlign.START)
                     .setAutoWidth(true);
             messages.addComponentColumn(message -> createMessageComponent(message.getMessageTranslate()))
                     .setHeader("Перевод")
+                    .setTextAlign(ColumnTextAlign.START)
                     .setAutoWidth(true);
             messages.addColumn(message -> dtf.format(message.getTranslationTime())).setHeader("Время и дата")
                     .setSortable(true)
+                    .setTextAlign(ColumnTextAlign.START)
                     .setAutoWidth(true);
             messages.setItems(translationMessages);
         }
 
-        private TextArea createMessageComponent(String message) {
+        private Component createMessageComponent(String message) {
+            var block = new HorizontalLayout();
+            block.setSizeFull();
+            block.setDefaultVerticalComponentAlignment(Alignment.START);
             var text = new TextArea();
             text.setWidthFull();
+            text.setMaxHeight("100px");
             text.setReadOnly(true);
             text.setValue(message);
-            return text;
+            block.add(text);
+            return block;
         }
     }
 }

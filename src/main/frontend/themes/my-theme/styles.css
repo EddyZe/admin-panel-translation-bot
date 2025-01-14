@@ -4,9 +4,15 @@
     transition: background-color 0.3s; /* Плавный переход цвета */
 }
 
-.grid {
-    background: linen;
+.custom-grid ::part(cell-content) {
+    vertical-align: top;
+
 }
+
+.custom-grid textarea {
+    overflow: hidden;
+}
+
 
 .hover-layout:hover {
     background-color: aliceblue; /* Цвет при наведении */

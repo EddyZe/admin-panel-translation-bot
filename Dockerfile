@@ -9,10 +9,14 @@ COPY ./mvnw.cmd ./mvnw.cmd
 COPY ./pom.xml ./pom.xml
 COPY ./src ./src
 
+EXPOSE 8082
+
 RUN ./mvnw clean install -DskipTests
+RUN ./mvnw vaadin:prepare-frontend
+RUN ./mvnw vaadin:build-frontend
 
 ENV TZ=Europe/Moscow
 RUN cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 
-CMD ./mvnw spring-boot:run -Dspring-boot.run.profiles=docker
+CMD ./mvnw spring-boot:run
