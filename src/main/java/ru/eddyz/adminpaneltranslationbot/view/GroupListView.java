@@ -27,6 +27,7 @@ import ru.eddyz.adminpaneltranslationbot.services.DeletedGroupService;
 import ru.eddyz.adminpaneltranslationbot.services.GroupService;
 import ru.eddyz.adminpaneltranslationbot.services.TranslationMessagesService;
 import ru.eddyz.adminpaneltranslationbot.services.UserService;
+import ru.eddyz.adminpaneltranslationbot.util.GridButton;
 
 import java.time.format.DateTimeFormatter;
 
@@ -75,6 +76,8 @@ public class GroupListView extends VerticalLayout {
     }
 
     private void configGroups() {
+        GridButton gridButton = new GridButton();
+
         groups.setSizeFull();
         groups.addColumn(Group::getGroupId).setHeader("ID").setAutoWidth(true);
         groups.addColumn(group -> userService.findByChatId(group.getChatId()).orElseThrow().getUsername())
@@ -87,33 +90,11 @@ public class GroupListView extends VerticalLayout {
                 .setHeader("Переведенных сообщений")
                 .setAutoWidth(true);
         groups.addComponentColumn(this::createEditMenu).setHeader("Символы");
-        groups.addComponentColumn(this::createDeleteBtn).setHeader("Удаление").setAutoWidth(true);
+        groups.addComponentColumn(group -> gridButton.createDeleteBtnGroup(groupService, deletedGroupService, group, groups))
+                .setHeader("Удаление").setAutoWidth(true);
         groups.setItemDetailsRenderer(createRenderGroup());
 
         dataView = groups.setItems(groupService.findAll());
-    }
-
-    private Icon createDeleteBtn(Group group) {
-        var icon = VaadinIcon.CLOSE_SMALL.create();
-        icon.setColor("red");
-        icon.addClickListener(clickEvent -> {
-            groupService.deleteLinksLanguage(group.getGroupId());
-            groupService.deleteById(group.getGroupId());
-            groups.setItems(groupService.findAll());
-            var deletedGroupOp = deletedGroupService.findByTelegramGroupId(group.getTelegramGroupId());
-
-            if (deletedGroupOp.isEmpty()) {
-                deletedGroupService.save(DeletedGroup.builder()
-                        .telegramGroupId(group.getTelegramGroupId())
-                        .chars(group.getLimitCharacters())
-                        .build());
-            } else {
-                var deletedGroup = deletedGroupOp.get();
-                deletedGroup.setChars(group.getLimitCharacters());
-                deletedGroupService.save(deletedGroup);
-            }
-        });
-        return icon;
     }
 
     private Component createEditMenu(Group group) {

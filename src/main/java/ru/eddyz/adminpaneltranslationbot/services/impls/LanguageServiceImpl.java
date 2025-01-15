@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.eddyz.adminpaneltranslationbot.domain.entities.LanguageTranslation;
 import ru.eddyz.adminpaneltranslationbot.repositories.LanguageRepository;
 import ru.eddyz.adminpaneltranslationbot.services.LanguageService;
@@ -54,4 +55,17 @@ public class LanguageServiceImpl implements LanguageService {
 
         languageRepository.save(languageTranslation);
     }
+
+    @Override
+    public void update(LanguageTranslation languageTranslation) {
+        languageRepository.save(languageTranslation);
+    }
+
+    @Override
+    @Transactional
+    public void deleteLinksGroup(Long languageId) {
+        languageRepository.deleteGroupLanguageLinks(languageId);
+    }
+
+
 }

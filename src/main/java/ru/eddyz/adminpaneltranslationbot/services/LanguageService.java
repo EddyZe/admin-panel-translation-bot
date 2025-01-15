@@ -19,4 +19,8 @@ public interface LanguageService {
     LanguageTranslation findById(Long id);
 
     void save(LanguageTranslation languageTranslation);
+
+    void update(LanguageTranslation languageTranslation);
+
+    void deleteLinksGroup(Long languageId);
 }
